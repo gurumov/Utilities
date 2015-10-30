@@ -1,5 +1,3 @@
-
-
 class FilesUtils
   #include DirtyHack
   @windows = true if /cygwin|mswin|mingw|bccwin|wince|emx/ =~ RUBY_PLATFORM
