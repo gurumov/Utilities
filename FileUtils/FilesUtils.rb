@@ -1,3 +1,5 @@
+require "zlib"
+
 class FilesUtils
   #include DirtyHack
   @windows = true if /cygwin|mswin|mingw|bccwin|wince|emx/ =~ RUBY_PLATFORM
@@ -5,20 +7,7 @@ class FilesUtils
   WINDOWS_EXTENSION_MATCHER = %r/\A.*\\.*\.[a-zA-z]{1,}\z/  #finish with group
   LINUX_EXTENSION_MATCHER = %r|\A.*/.*\.[a-zA-z]{1,}\z|
   EXTENSION_MATCHER = @windows ? WINDOWS_EXTENSION_MATCHER : LINUX_EXTENSION_MATCHER
-  attr_reader :path
 
-  def initialize(path:)
-    raise ArgumentError, 'The path can not be empty' if path.empty?
-    @path = Dir.new(path)
-  end
-
-  def path=(path)
-    raise ArgumentError, 'The path can not be empty' if path.empty?
-    @path.chdir(path)
-  end
-
-
-  #, content_type => :all
   def self.list_content(path, list_recursive: false,
                         include_full_path: false, show_files_only: false)
     hidden_directory_pattern = %r/\A(\.|\.\.)\z/
@@ -44,11 +33,17 @@ class FilesUtils
     return list
   end
 
-
-  def list_content(list_recursive: false, include_full_path: false, show_files_only: false)
-    self.list_content(@path, list_recursive: list_recursive,
-                            include_full_path: include_full_path,
-                            show_files_only: show_files_only)
+  def self.add_ending_to_name(file_list, ending)
+    return if file_list.empty? || ending.empty?
+    file_list = [].push(file_list) unless file_list.is_a? Array
+    file_list.each do |f|
+      old_file_name = File.basename(f, ".*")
+      ext_name = File.extname(f)
+      new_file_name = old_file_name + "_#{ending}" + ext_name
+      dir_name = File.dirname(f)
+      full_new_name = dir_name + SEPARATOR + new_file_name
+      File.rename(f , full_new_name)
+    end
   end
 
   def self.file?(name)
@@ -57,14 +52,3 @@ class FilesUtils
   end
 
 end
-#
-# module DirtyHack
-#   refine String do
-#     def dir?(file)
-#       fil
-#     end
-#
-#     def type(file)
-#     end
-#   end
-# end
